@@ -2,6 +2,7 @@ import os
 import math
 import argparse
 import pandas as pd
+import torch
 from torch.utils.data import DataLoader
 from util import build_cross_data
 from sentence_transformers import InputExample
@@ -60,7 +61,7 @@ def main():
               warmup_steps=warmup_steps,
               output_path=args.cross-save-path)
 
-
+    torch.cuda.empty_cache()
     ##### Load model and eval on test set
     model = CrossEncoder(args.cross-save-path)
 
