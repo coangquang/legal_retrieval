@@ -12,7 +12,7 @@ from preprocess import tokenise, preprocess_question
 from pyvi.ViTokenizer import tokenize
 
 class DPRRetriever():
-    def __init__(self, args, q_encoder=None, ctx_encoder=None, biencoder=None, save_type="", sub=False):
+    def __init__(self, args, q_encoder=None, ctx_encoder=None, biencoder=None, save_type="dpr", sub=False):
         start = time.time()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.args = args
@@ -78,7 +78,11 @@ class DPRRetriever():
             question_embedding = self.q_encoder.get_representation(Q['input_ids'].to(self.device),
                                                                    Q['attention_mask'].to(self.device))[0].to('cpu').numpy()
             scores, retrieved_examples = self.corpus.get_nearest_examples('embeddings', question_embedding, k=top_k)
-            retrieved_ids = retrieved_examples['id']         
+            retrieved_ids = retrieved_examples['id'] 
+        if self.sub:
+            retrieved_sub_ids = retrieved_examples['sub_id']   
+            end = time.time()
+            return retrieved_ids, retrieved_sub_ids, scores    
         end = time.time()
         #print(end - start)
         return retrieved_ids, scores
@@ -87,11 +91,18 @@ class DPRRetriever():
         result = []
         dtest = pd.read_csv(os.path.join(self.args.data_dir, 'ttest.csv'))
         dval = pd.read_csv(os.path.join(self.args.data_dir, 'tval.csv'))
-        if train:
-            dtrain = pd.read_csv(os.path.join(self.args.data_dir, 'ttrain.csv'))
-            train_retrieved = self.retrieve_on_data(dtrain, name = 'train', top_k= max(top_k),segmented=segmented)
-        test_retrieved = self.retrieve_on_data(dtest, name = 'test', top_k= max(top_k), segmented=segmented)
-        val_retrieved = self.retrieve_on_data(dval, name = 'val', top_k= max(top_k),segmented=segmented)
+        if self.sub:
+            if train:
+                dtrain = pd.read_csv(os.path.join(self.args.data_dir, 'ttrain.csv'))
+                train_retrieved, train_sub_retrieved = self.retrieve_on_data(dtrain, name = 'train', top_k= max(top_k),segmented=segmented)
+            test_retrieved, test_sub_retrieved = self.retrieve_on_data(dtest, name = 'test', top_k= max(top_k), segmented=segmented)
+            val_retrieved, val_sub_retrieved = self.retrieve_on_data(dval, name = 'val', top_k= max(top_k),segmented=segmented)
+        else:
+            if train:
+                dtrain = pd.read_csv(os.path.join(self.args.data_dir, 'ttrain.csv'))
+                train_retrieved = self.retrieve_on_data(dtrain, name = 'train', top_k= max(top_k),segmented=segmented)
+            test_retrieved = self.retrieve_on_data(dtest, name = 'test', top_k= max(top_k), segmented=segmented)
+            val_retrieved = self.retrieve_on_data(dval, name = 'val', top_k= max(top_k),segmented=segmented)
         
         for k in top_k:
             rlt = {}
@@ -121,21 +132,38 @@ class DPRRetriever():
         count = 0
         acc = 0
         retrieved_list = []
+        retrieved_sub_list = []
         if not segmented:
             tokenized_questions = []
             for i in range(len(df)):
                 tokenized_question = tokenise(preprocess_question(df['question'][i], remove_end_phrase=False), tokenize)
                 tokenized_questions.append(tokenized_question)
             df['tokenized_question'] = tokenized_questions
-                
-        for i in range(len(df)):
-            tokenized_question = df['tokenized_question'][i]
-            retrieved_ids, _ = self.retrieve(tokenized_question, top_k, segmented=True)
-            retrieved_list.append(retrieved_ids)
-        save_file = "outputs/" + self.save_type + "_" + name + "_retrieved.json" 
-        with open(save_file, 'w') as f:
-            json.dump(retrieved_list, f, ensure_ascii = False, indent =4)
-        return retrieved_list
+            
+        if not self.sub:
+            for i in range(len(df)):
+                tokenized_question = df['tokenized_question'][i]
+                retrieved_ids, _ = self.retrieve(tokenized_question, top_k, segmented=True)
+                retrieved_list.append(retrieved_ids)
+
+            save_file = "outputs/" + self.save_type + "_" + name + "_retrieved.json" 
+            with open(save_file, 'w') as f:
+                json.dump(retrieved_list, f, ensure_ascii = False, indent =4)
+            return retrieved_list
+        else:            
+            for i in range(len(df)):
+                tokenized_question = df['tokenized_question'][i]
+                retrieved_ids, retrieved_sub_ids, _ = self.retrieve(tokenized_question, top_k, segmented=True)
+                retrieved_list.append(retrieved_ids)
+                retrieved_sub_list.append(retrieved_sub_ids)
+
+            save_file = "outputs/" + self.save_type + "_" + name + "_retrieved.json" 
+            sub_save_file = "outputs/" + self.save_type + "_" + name + "_sub_retrieved.json"
+            with open(save_file, 'w') as f:
+                json.dump(retrieved_list, f, ensure_ascii = False, indent =4)
+            with open(sub_save_file, 'w') as f:
+                json.dump(retrieved_sub_list, f, ensure_ascii = False, indent =4)
+            return retrieved_list, retrieved_sub_list
     
     def find_neg(self, df, name, no_negs=3, segmented=True):
         retrieved_list = self.retrieve_on_data(df, name, no_negs+5, segmented)
@@ -180,6 +208,8 @@ class DPRRetriever():
         return dff, dt
     
     def increase_neg(self, no_negs=3, segmented=True):
+        if self.sub:
+            return None
         dtrain = pd.read_csv(os.path.join(self.args.data_dir, 'ttrain.csv'))
         dval = pd.read_csv(os.path.join(self.args.data_dir, 'tval.csv'))
         dtest = pd.read_csv(os.path.join(self.args.data_dir, 'ttest.csv'))
