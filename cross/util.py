@@ -1,10 +1,8 @@
 import json
-import random
 import pandas as pd
-from torch.utils.data import DataLoader
 from sentence_transformers import InputExample
 
-def cross_dataloader(dscorpus, json_file, csv_file, batch_size, shuffle=False, no_negs= 30):
+def build_cross_data(dscorpus, json_file, csv_file, no_negs= 30):
     """
     This function builds train, val, test dataframe for training and evaluating cross-encoder
     """
@@ -30,6 +28,5 @@ def cross_dataloader(dscorpus, json_file, csv_file, batch_size, shuffle=False, n
         for neg_id in neg_ids:
             tokenized_text = dscorpus['tokenized_text'][neg_id]
             example = InputExample(texts=[tokenized_question, tokenized_text], label=1)
-            data.append(example)        
-    cross_dataloader = DataLoader(data, shuffle=shuffle, batch_size=batch_size)    
-    return cross_dataloader
+            data.append(example)           
+    return data
