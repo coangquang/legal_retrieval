@@ -87,7 +87,7 @@ class DPRRetriever():
         #print(end - start)
         return retrieved_ids, scores
     
-    def test_on_data(self, top_k =[100], segmented = True, train= False):
+    def test_on_data(self, top_k =[100], segmented = True, train= True):
         result = []
         dtest = pd.read_csv(os.path.join(self.args.data_dir, 'ttest.csv'))
         dval = pd.read_csv(os.path.join(self.args.data_dir, 'tval.csv'))

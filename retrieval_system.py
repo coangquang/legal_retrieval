@@ -9,6 +9,7 @@ from dpr.model import BiEncoder
 from dpr.util import get_tokenizer
 from dpr.preprocess import tokenise, preprocess_question
 from pyvi.ViTokenizer import tokenize
+from dpr.retriever import DPRRetriever
 from sentence_transformers.cross_encoder import CrossEncoder
 
 class Retriever():
@@ -24,54 +25,23 @@ class Retriever():
         self.args = args
         self.save_type = save_type
         self.dpr_tokenizer = get_tokenizer(self.args.BE_checkpoint)
+        
         if biencoder is not None:
-            self.biencoder = biencoder
+            self.dpr = DPRRetriever(self.args, biencoder=biencoder)
         elif q_encoder is not None and ctx_encoder is not None:
-            self.biencoder = BiEncoder(model_checkpoint=self.args.BE_checkpoint,
-                                       q_encoder=q_encoder,
-                                       ctx_encoder=ctx_encoder,
-                                       representation=self.args.BE_representation,
-                                       q_fixed=self.args.q_fixed,
-                                       ctx_fixed=self.args.ctx_fixed)
+            self.dpr = DPRRetriever(self.args, q_encoder=q_encoder, ctx_encoder=ctx_encoder)
         else:
-            self.biencoder = BiEncoder(model_checkpoint=self.args.BE_checkpoint,
-                                       representation=self.args.BE_representation,
-                                       q_fixed=self.args.q_fixed,
-                                       ctx_fixed=self.args.ctx_fixed)
-            self.biencoder.load_state_dict(torch.load(self.args.biencoder_path))
+            self.dpr = DPRRetriever(self.args)
             
-        self.biencoder.to(self.device)
-        self.q_encoder, self.ctx_encoder = self.biencoder.get_models()
-        self.corpus = load_dataset("csv", data_files=self.args.corpus_file, split = 'train')
-        if self.args.index_path:
-            self.corpus.load_faiss_index('embeddings', self.args.index_path)
-        else:
-            self.corpus = self.get_index()
+        self.dpr.to(self.device)
+        self.q_encoder, self.ctx_encoder = self.dpr.biencoder.get_models()
+        self.corpus = self.dpr.corpus
         if cross_encoder is not None:
             self.cross_encoder = cross_encoder
         else:
             self.cross_encoder = CrossEncoder(self.args.cross_checkpoint)
         end = time.time()
         print(end - start)
-        
-    def get_index(self):
-        self.ctx_encoder.to("cuda").eval()
-        with torch.no_grad():
-            corpus_with_embeddings = self.corpus.map(lambda example: {'embeddings': self.ctx_encoder.get_representation(self.dpr_tokenizer.encode_plus(example["tokenized_text"],
-                                                                                                                                                       padding='max_length',
-                                                                                                                                                       truncation=True,
-                                                                                                                                                       max_length=self.args.ctx_len,
-                                                                                                                                                       return_tensors='pt')['input_ids'].to(self.device),
-                                                                                                                        self.dpr_tokenizer.encode_plus(example["tokenized_text"],
-                                                                                                                                                       padding='max_length',
-                                                                                                                                                       truncation=True,
-                                                                                                                                                       max_length=self.args.ctx_len,
-                                                                                                                                                       return_tensors='pt')['attention_mask'].to(self.device))[0].to('cpu').numpy()})
-        corpus_with_embeddings.add_faiss_index(column='embeddings', metric_type=faiss.METRIC_INNER_PRODUCT)
-        index_path = self.args.biencoder_path.split("/")[-1]
-        index_path = "outputs/index/index_"+ self.save_type + ".faiss"
-        corpus_with_embeddings.save_faiss_index('embeddings', index_path)
-        return corpus_with_embeddings
     
     def retrieve(self, question, top_k=30, segmented = False):
         start = time.time()
@@ -81,7 +51,7 @@ class Retriever():
             tokenized_question = question
         else:
              tokenized_question = tokenise(preprocess_question(question, remove_end_phrase=False), tokenize)
-        retrieved_ids, retrieved_sub_ids, dpr_scores = self.biencoder.retrieve(tokenized_question, top_k=top_k, segmented=True)
+        retrieved_ids, retrieved_sub_ids, dpr_scores = self.dpr.retrieve(tokenized_question, top_k=top_k, segmented=True)
         cross_samples = [[tokenized_question, self.corpus['tokenized_text'][retrieved_id]] for retrieved_id in retrieved_sub_ids]
         cross_scores = list(self.cross_encoder.predict(cross_samples)) 
         rerank_list = [(retrieved_ids[i], retrieved_sub_ids[i], cross_scores[i]) for i in range(top_k)]

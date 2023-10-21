@@ -15,6 +15,8 @@ def main():
                         help="Directory of the sub corpus file (scorpus.json)")
     parser.add_argument("--file_dir", default=None, type=str,
                         help="Directory of the files to prepare data for training cross-encoder")
+    parser.add_argument("--json_dir", default=None, type=str,
+                        help="Directory of the files to prepare data for training cross-encoder")
     parser.add_argument("--cross_checkpoint", default="vinai/phobert-base-v2", type=str,
                         help="Name or directory of pretrained model for cross-encoder")
     parser.add_argument("--cross_num_epochs", default=2, type=int,
@@ -36,15 +38,15 @@ def main():
     
     dscorpus = pd.read_csv(args.scorpus_file)
     train_samples = build_cross_data(dscorpus=dscorpus,
-                                     json_file=os.join(args.file_dir, "dpr_train_sub_retrieved.json"),
+                                     json_file=os.join(args.json_dir, "dpr_train_sub_retrieved.json"),
                                      csv_file=os.join(args.file_dir, "ttrain.csv"),
                                      no_negs=args.cross_no_negs)
     val_samples = build_cross_data(dscorpus=dscorpus,
-                                   json_file=os.join(args.file_dir, "dpr_val_sub_retrieved.json"),
+                                   json_file=os.join(args.json_dir, "dpr_val_sub_retrieved.json"),
                                    csv_file=os.join(args.file_dir, "tval.csv"),
                                    no_negs=args.cross_no_negs)
     test_samples = build_cross_data(dscorpus=dscorpus,
-                                   json_file=os.join(args.file_dir, "dpr_test_sub_retrieved.json"),
+                                   json_file=os.join(args.json_dir, "dpr_test_sub_retrieved.json"),
                                    csv_file=os.join(args.file_dir, "ttest.csv"),
                                    no_negs=args.cross_no_negs)
     
