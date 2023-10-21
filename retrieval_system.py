@@ -40,7 +40,7 @@ class Retriever():
         if cross_encoder is not None:
             self.cross_encoder = cross_encoder
         else:
-            self.cross_encoder = CrossEncoder(self.args.cross_checkpoint, device="cpu", max_length=self.args.ctx_length)
+            self.cross_encoder = CrossEncoder(self.args.cross_checkpoint, device="cpu", max_length=self.args.ctx_len)
         end = time.time()
         print(end - start)
     
