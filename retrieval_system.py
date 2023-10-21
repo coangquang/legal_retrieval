@@ -40,7 +40,7 @@ class Retriever():
         if cross_encoder is not None:
             self.cross_encoder = cross_encoder
         else:
-            self.cross_encoder = CrossEncoder(self.args.cross_checkpoint, device="cpu")
+            self.cross_encoder = CrossEncoder(self.args.cross_checkpoint, device="cpu", max_length=self.args.ctx_length)
         end = time.time()
         print(end - start)
     
@@ -54,9 +54,9 @@ class Retriever():
              tokenized_question = tokenise(preprocess_question(question, remove_end_phrase=False), tokenize)
         retrieved_ids, retrieved_sub_ids, dpr_scores = self.dpr.retrieve(tokenized_question, top_k=top_k, segmented=True)
         cross_samples = [[tokenized_question, self.corpus['tokenized_text'][retrieved_id]] for retrieved_id in retrieved_sub_ids]
-        print(cross_samples)
+        #print(cross_samples)
         cross_results = self.cross_encoder.predict(cross_samples)
-        print(cross_results)
+        #print(cross_results)
         cross_scores = list(cross_results) 
         rerank_list = [(retrieved_ids[i], retrieved_sub_ids[i], cross_scores[i]) for i in range(top_k)]
         sorted_rerank_list = sorted(rerank_list, key=lambda x: x[2], reverse=True)   
