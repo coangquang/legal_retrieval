@@ -38,16 +38,16 @@ def main():
     
     dscorpus = pd.read_csv(args.scorpus_file)
     train_samples = build_cross_data(dscorpus=dscorpus,
-                                     json_file=os.join(args.json_dir, "dpr_train_sub_retrieved.json"),
-                                     csv_file=os.join(args.file_dir, "ttrain.csv"),
+                                     json_file=os.path.join(args.json_dir, "dpr_train_sub_retrieved.json"),
+                                     csv_file=os.path.join(args.file_dir, "ttrain.csv"),
                                      no_negs=args.cross_no_negs)
     val_samples = build_cross_data(dscorpus=dscorpus,
-                                   json_file=os.join(args.json_dir, "dpr_val_sub_retrieved.json"),
-                                   csv_file=os.join(args.file_dir, "tval.csv"),
+                                   json_file=os.path.join(args.json_dir, "dpr_val_sub_retrieved.json"),
+                                   csv_file=os.path.join(args.file_dir, "tval.csv"),
                                    no_negs=args.cross_no_negs)
     test_samples = build_cross_data(dscorpus=dscorpus,
-                                   json_file=os.join(args.json_dir, "dpr_test_sub_retrieved.json"),
-                                   csv_file=os.join(args.file_dir, "ttest.csv"),
+                                   json_file=os.path.join(args.json_dir, "dpr_test_sub_retrieved.json"),
+                                   csv_file=os.path.join(args.file_dir, "ttest.csv"),
                                    no_negs=args.cross_no_negs)
     
     train_dataloader = DataLoader(train_samples, shuffle=True, batch_size=args.cross_batch_size)
