@@ -62,6 +62,7 @@ def main():
               evaluator=evaluator,
               epochs=args.cross_num_epochs,
               warmup_steps=warmup_steps,
+              evaluation_steps=args.cross_eval_steps,
               output_path=args.cross_save_path)
 
     torch.cuda.empty_cache()
