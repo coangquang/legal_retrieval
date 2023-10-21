@@ -31,6 +31,7 @@ def main():
                         help="cross-encoder threshold for classification")
     parser.add_argument("--cross_no_negs", default=1, type=int,
                         help="Number of top negatives using")
+    parser.add_argument("--cross_eval_steps", default=1000, type=int)
     parser.add_argument("--cross_save_path", default=None, type=str,
                         help="Path to save the best state")
     
