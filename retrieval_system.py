@@ -28,11 +28,11 @@ class Retriever():
         self.dpr_tokenizer = get_tokenizer(self.args.BE_checkpoint)
         
         if biencoder is not None:
-            self.dpr = DPRRetriever(self.args, biencoder=biencoder)
+            self.dpr = DPRRetriever(self.args, biencoder=biencoder, sub=True)
         elif q_encoder is not None and ctx_encoder is not None:
-            self.dpr = DPRRetriever(self.args, q_encoder=q_encoder, ctx_encoder=ctx_encoder)
+            self.dpr = DPRRetriever(self.args, q_encoder=q_encoder, ctx_encoder=ctx_encoder, sub=True)
         else:
-            self.dpr = DPRRetriever(self.args)
+            self.dpr = DPRRetriever(self.args, sub=True)
             
         #self.dpr.to(self.device)
         self.q_encoder, self.ctx_encoder = self.dpr.biencoder.get_models()
