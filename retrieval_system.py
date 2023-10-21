@@ -176,3 +176,7 @@ def main():
     args = parser.parse_args()
     dpr_retriever = Retriever(args)
     dpr_retriever.test_on_data(top_k = [1,5,10,30,100])
+
+
+if __name__ == "__main__":
+    main()
