@@ -148,7 +148,7 @@ class Retriever():
     
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scorpus_file", default=None, type=str,
+    parser.add_argument("--corpus_file", default=None, type=str,
                         help="Directory of the subcorpus file (scorpus.json)")
     parser.add_argument("--data_dir", default=None, type=str,
                         help="Directory of the data folder (containing train, test, val, ttrain, ttest, tval file)")
