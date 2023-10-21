@@ -11,7 +11,7 @@ from sentence_transformers.cross_encoder.evaluation import CEBinaryAccuracyEvalu
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scorpus_file", default=None, type=str,
+    parser.add_argument("--corpus_file", default=None, type=str,
                         help="Directory of the sub corpus file (scorpus.json)")
     parser.add_argument("--file_dir", default=None, type=str,
                         help="Directory of the files to prepare data for training cross-encoder")
