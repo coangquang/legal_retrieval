@@ -1,10 +1,4 @@
-import os
-import math
 import argparse
-import pandas as pd
-import torch
-from torch.utils.data import DataLoader
-from util import build_cross_data
 from retriever import DPRRetriever
 
 def main():
