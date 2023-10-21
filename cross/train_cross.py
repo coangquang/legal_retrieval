@@ -31,7 +31,7 @@ def main():
                         help="cross-encoder threshold for classification")
     parser.add_argument("--cross_no_negs", default=1, type=int,
                         help="Number of top negatives using")
-    parser.add_argument("--cross-save_path", default=None, type=str,
+    parser.add_argument("--cross_save_path", default=None, type=str,
                         help="Path to save the best state")
     
     args = parser.parse_args()
@@ -61,11 +61,11 @@ def main():
               evaluator=evaluator,
               epochs=args.cross_num_epochs,
               warmup_steps=warmup_steps,
-              output_path=args.cross-save-path)
+              output_path=args.cross_save_path)
 
     torch.cuda.empty_cache()
     ##### Load model and eval on test set
-    model = CrossEncoder(args.cross-save-path)
+    model = CrossEncoder(args.cross_save_path)
 
     evaluator = CEBinaryAccuracyEvaluator.from_input_examples(test_samples, name='cross-test')
     evaluator(model)
