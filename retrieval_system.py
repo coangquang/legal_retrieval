@@ -34,7 +34,7 @@ class Retriever():
         else:
             self.dpr = DPRRetriever(self.args)
             
-        self.dpr.to(self.device)
+        #self.dpr.to(self.device)
         self.q_encoder, self.ctx_encoder = self.dpr.biencoder.get_models()
         self.corpus = self.dpr.corpus
         if cross_encoder is not None:
