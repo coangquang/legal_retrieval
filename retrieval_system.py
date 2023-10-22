@@ -67,38 +67,43 @@ class Retriever():
         #print(end - start)
         return rerank_ids, rerank_sub_ids, rerank_scores
     
-    def test_on_data(self, top_k =[30], segmented = True, train= False):
+    def test_on_data(self, top_k =[30], segmented = True, train= False, test= False, val= False):
         result = []
-        dtest = pd.read_csv(os.path.join(self.args.data_dir, 'ttest.csv'))
-        dval = pd.read_csv(os.path.join(self.args.data_dir, 'tval.csv'))
+        
+        
 
         if train:
             dtrain = pd.read_csv(os.path.join(self.args.data_dir, 'ttrain.csv'))
             train_retrieved, train_sub_retrieved = self.retrieve_on_data(dtrain, name = 'train', top_k= max(top_k),segmented=segmented)
-        test_retrieved, test_sub_retrieved = self.retrieve_on_data(dtest, name = 'test', top_k= max(top_k), segmented=segmented)
-        val_retrieved, val_sub_retrieved = self.retrieve_on_data(dval, name = 'val', top_k= max(top_k),segmented=segmented)
+        if test:
+            dtest = pd.read_csv(os.path.join(self.args.data_dir, 'ttest.csv'))
+            test_retrieved, test_sub_retrieved = self.retrieve_on_data(dtest, name = 'test', top_k= max(top_k), segmented=segmented)
+        if val:
+            dval = pd.read_csv(os.path.join(self.args.data_dir, 'tval.csv'))
+            val_retrieved, val_sub_retrieved = self.retrieve_on_data(dval, name = 'val', top_k= max(top_k),segmented=segmented)
         
         
         for k in top_k:
             rlt = {}
             strk = str(k)
             rlt[strk] = {}
-            test_retrieved_k = [x[:k] for x in test_retrieved]
-            val_retrieved_k = [x[:k] for x in val_retrieved]
-            
             print("Testing hit scores with top_{}:".format(k))
-            val_hit_acc, val_all_acc = self.calculate_score(dval, val_retrieved_k)
-            rlt[strk]['val_hit'] = val_hit_acc
-            rlt[strk]['val_all'] = val_all_acc
-            print("\tVal hit acc: {:.4f}%".format(val_hit_acc*100))
-            print("\tVal all acc: {:.4f}%".format(val_all_acc*100))
-            test_hit_acc, test_all_acc = self.calculate_score(dtest, test_retrieved_k)
-            rlt[strk]['test_hit'] = test_hit_acc
-            rlt[strk]['test_all'] = test_all_acc
-            print("\tTest hit acc: {:.4f}%".format(test_hit_acc*100))
-            print("\tTest all acc: {:.4f}%".format(test_all_acc*100))
+            if test:
+                test_retrieved_k = [x[:k] for x in test_retrieved]
+                test_hit_acc, test_all_acc = self.calculate_score(dtest, test_retrieved_k)
+                rlt[strk]['test_hit'] = test_hit_acc
+                rlt[strk]['test_all'] = test_all_acc
+                print("\tTest hit acc: {:.4f}%".format(test_hit_acc*100))
+                print("\tTest all acc: {:.4f}%".format(test_all_acc*100))
+            if val:
+                val_retrieved_k = [x[:k] for x in val_retrieved]
+                val_hit_acc, val_all_acc = self.calculate_score(dval, val_retrieved_k)
+                rlt[strk]['val_hit'] = val_hit_acc
+                rlt[strk]['val_all'] = val_all_acc
+                print("\tVal hit acc: {:.4f}%".format(val_hit_acc*100))
+                print("\tVal all acc: {:.4f}%".format(val_all_acc*100))
+            
             result.append(rlt)
-        #name = self.args.biencoder_path.split("/")
         save_file = "outputs/testdpr_"+ self.save_type + ".json" 
         with open(save_file, 'w') as f:
             json.dump(result, f, ensure_ascii = False, indent =4)
