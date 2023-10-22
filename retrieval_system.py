@@ -186,9 +186,9 @@ def main():
     args = parser.parse_args()
     dpr_retriever = Retriever(args)
     if args.cross_check == "test":
-        dpr_retriever.test_on_data(top_k = [1,5,10,30,100], test=True)
+        dpr_retriever.test_on_data(top_k = [1,5,10,30], test=True)
     elif args.cross_check == "val":
-        dpr_retriever.test_on_data(top_k = [1,5,10,30,100], val=True)
+        dpr_retriever.test_on_data(top_k = [1,5,10,30], val=True)
 
 if __name__ == "__main__":
     main()
