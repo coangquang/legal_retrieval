@@ -59,7 +59,7 @@ class Retriever():
         #print(cross_results)
         cross_scores = list(cross_results) 
         rerank_list = [(retrieved_ids[i], retrieved_sub_ids[i], cross_scores[i]) for i in range(top_k)]
-        sorted_rerank_list = sorted(rerank_list, key=lambda x: x[2], reverse=False)   
+        sorted_rerank_list = sorted(rerank_list, key=lambda x: x[2], reverse=True)   
         rerank_ids = [x[0] for x in sorted_rerank_list]
         rerank_sub_ids = [x[1] for x in sorted_rerank_list]
         rerank_scores = [x[2] for x in sorted_rerank_list]
