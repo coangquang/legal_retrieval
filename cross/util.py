@@ -19,7 +19,7 @@ def build_cross_data(dscorpus, json_file, csv_file, no_negs= 30):
         ans_sub_ids = [int(x) for x in ans_sub_ids.split(", ")]
         for a_sub_id in ans_sub_ids:
             tokenized_text = dscorpus['tokenized_text'][a_sub_id]
-            example = InputExample(texts=[tokenized_question, tokenized_text], label=0)
+            example = InputExample(texts=[tokenized_question, tokenized_text], label=1)
             for j in range(no_negs):
                 data.append(example)
                 
@@ -27,6 +27,6 @@ def build_cross_data(dscorpus, json_file, csv_file, no_negs= 30):
         neg_ids = neg_ids[:no_negs]
         for neg_id in neg_ids:
             tokenized_text = dscorpus['tokenized_text'][neg_id]
-            example = InputExample(texts=[tokenized_question, tokenized_text], label=1)
+            example = InputExample(texts=[tokenized_question, tokenized_text], label=0)
             data.append(example)           
     return data
