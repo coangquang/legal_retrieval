@@ -180,11 +180,15 @@ def main():
                         help="Path to save the index")
     parser.add_argument("--cross_checkpoint", default="vinai/phobert-base-v2", type=str,
                         help="Name or directory of pretrained model for cross-encoder")
+    parser.add_argument("--cross_check", default="test", type=str,
+                        help="Name or directory of pretrained model for cross-encoder")
     
     args = parser.parse_args()
     dpr_retriever = Retriever(args)
-    dpr_retriever.test_on_data(top_k = [1,5,10,30,100])
-
+    if args.cross_check == "test":
+        dpr_retriever.test_on_data(top_k = [1,5,10,30,100], test=True)
+    elif args.cross_check == "val":
+        dpr_retriever.test_on_data(top_k = [1,5,10,30,100], val=True)
 
 if __name__ == "__main__":
     main()
