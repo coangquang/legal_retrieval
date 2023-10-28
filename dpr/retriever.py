@@ -6,9 +6,9 @@ import torch
 import pandas as pd
 import faiss
 from datasets import load_dataset
-from dpr.model import BiEncoder
-from dpr.util import get_tokenizer
-from dpr.preprocess import tokenise, preprocess_question
+from model import BiEncoder
+from util import get_tokenizer
+from preprocess import tokenise, preprocess_question
 from pyvi.ViTokenizer import tokenize
 
 class DPRRetriever():
