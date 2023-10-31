@@ -75,6 +75,8 @@ class DPRTrainer():
         else:
             self.criterion = BiEncoderDoubleNllLoss(score_type=self.args.BE_score,
                                                     alpha=self.args.BE_loss)
+            
+        self.val_criterion = BiEncoderNllLoss(score_type=self.args.BE_score)
         self.optimizer = Adam(self.model.parameters(), lr=args.BE_lr) 
         self.scheduler = WarmupLinearSchedule(self.optimizer, 0.1 * len(self.train_loader) * self.args.BE_num_epochs, len(self.train_loader) * self.args.BE_num_epochs)
         self.epoch = 0
@@ -319,7 +321,7 @@ class DPRTrainer():
                     q_input_ids, q_attn_mask, ctx_input_ids, ctx_attn_mask = tuple(t.to(self.device) for t in batch)
 
                 q_vectors, ctx_vectors = self.model(q_input_ids, q_attn_mask, ctx_input_ids, ctx_attn_mask)
-                loss, num_correct = self.criterion.calc(q_vectors, ctx_vectors)
+                loss, num_correct = self.val_criterion.calc(q_vectors, ctx_vectors)
                 total_loss += loss.item()
                 total_correct += num_correct
 
