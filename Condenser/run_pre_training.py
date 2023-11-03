@@ -181,8 +181,10 @@ def main():
         #print(dataloader[0])
         #for step, inputs in enumerate(dataloader):
         #    print(inputs)
-        # trainer.train(model_path=model_path)
-        trainer.train()
+        if model_path:
+            trainer.train(model_path=model_path)
+        else:
+            trainer.train()
         trainer.save_model()  # Saves the tokenizer too for easy upload
 
     # Evaluation
