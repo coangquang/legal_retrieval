@@ -29,8 +29,8 @@ def main():
                         help="Cross-encoder training batch size (sum in all gpus)")
     parser.add_argument("--cross_lr", default=0.00001, type=float,
                         help="cross-encoder training learning rate")
-    #parser.add_argument("--cross_threshold", default=0.5, type=float,
-    #                    help="cross-encoder threshold for classification")
+    parser.add_argument("--cross_dropout", default=0.1, type=float,
+                        help="cross-encoder threshold for classification")
     parser.add_argument("--cross_no_negs", default=1, type=int,
                         help="Number of top negatives using")
     parser.add_argument("--cross_eval_steps", default=1000, type=int)
@@ -39,6 +39,8 @@ def main():
                         help="Path to save the best state")
     parser.add_argument("--cross_final_path", default=None, type=str,
                         help="Path to save the final state")
+    parser.add_argument("--cross_load_path", default=None, type=str,
+                        help="Path to load state")
     
     args = parser.parse_args()
     
