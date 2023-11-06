@@ -87,7 +87,7 @@ class CrossTrainer():
               .format(val_time, val_loss, (val_acc*100)))
         print("\n",
               20 * "=",
-              "Training biencoder model on device: {}".format(self.device),
+              "Training cross-encoder model on device: {}".format(self.device),
               20 * "=")
         while self.epoch < self.args.cross_num_epochs:
             self.epoch +=1
