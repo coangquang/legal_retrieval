@@ -19,8 +19,6 @@ def main():
                         help="Name or directory of pretrained model for cross-encoder")
     parser.add_argument("--cross_representation", default=0, type=int,
                         help="Type of encoder representation (-10 for avg, -100 for pooled-output)")
-    parser.add_argument("--cross_fixed", default=False, type=bool,
-                        help="To fix question encoder during training stage or not")
     parser.add_argument("--cross_num_epochs", default=2, type=int,
                         help="Number of training epochs for cross-encoder")
     parser.add_argument("--cross_max_len", default=256, type=int,

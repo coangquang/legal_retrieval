@@ -58,7 +58,6 @@ class CrossTrainer():
         
         self.model = CrossEncoder(model_checkpoint = self.args.cross_checkpoint,
                                   representation = self.args.cross_representation,
-                                  fixed = self.args.cross_fixed,
                                   dropout = self.args.cross_dropout)
         if self.args.cross_load_path:
             self.model.load_state_dict(torch.load(self.args.cross_load_path))
