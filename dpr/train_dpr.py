@@ -1,12 +1,12 @@
 import os
 import argparse
-import faiss
+#import faiss
 import pandas as pd
-import numpy as np
+#import numpy as np
 import torch
-from util import get_tokenizer, build_dpr_traindata, build_dpr_testdata, embed_corpus
+from util import get_tokenizer, build_dpr_traindata#, embed_corpus
 from trainer import DPRTrainer
-from model import BiEncoder
+#from model import BiEncoder
 from retriever import DPRRetriever
 
 def main():

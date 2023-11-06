@@ -1,6 +1,12 @@
+import time
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+
 import torch
 from torch.nn import DataParallel
 import torch.nn.functional as F
+from torch.optim import AdamW
+from torch.optim.lr_scheduler import LambdaLR
 
 from model import CrossEncoder
 
@@ -14,6 +20,21 @@ class CrossEncoderCELoss(object):
         correct_predictions_count = (max_idxs == labels).sum()
         return loss, correct_predictions_count
     
+class WarmupLinearSchedule(LambdaLR):
+    """ Linear warmup and then linear decay.
+        Linearly increases learning rate from 0 to 1 over `warmup_steps` training steps.
+        Linearly decreases learning rate from 1. to 0. over remaining `t_total - warmup_steps` steps.
+    """
+    def __init__(self, optimizer, warmup_steps, t_total, last_epoch=-1):
+        self.warmup_steps = warmup_steps
+        self.t_total = t_total
+        super(WarmupLinearSchedule, self).__init__(optimizer, self.lr_lambda, last_epoch=last_epoch)
+
+    def lr_lambda(self, step):
+        if step < self.warmup_steps:
+            return float(step) / float(max(1, self.warmup_steps))
+        return max(0.0, float(self.t_total - step) / float(max(1.0, self.t_total - self.warmup_steps)))
+    
 class CrossTrainer():
     """
     Trainer for cross-encoder
@@ -22,35 +43,37 @@ class CrossTrainer():
                  args,
                  train_loader, 
                  val_loader,
-                 test_loader,
-                 parallel = False):
+                 test_loader):
+        
         self.stop = False
-        self.parallel = parallel
+
         self.args = args
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.test_loader = test_loader
+            
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = CrossEncoder(model_checkpoint = self.args['cross_checkpoint'],
-                                  representation = self.args['cross_representation'],
-                                  fixed = self.args['cross_fixed'],
-                                  dropout = self.args['cross_dropout'])
-        if self.args["cross_load_path"]:
-            self.model.load_state_dict(torch.load(self.args["cross_load_path"]))
+        self.parallel = True if torch.cuda.device_count() > 1 else False
+        print("No of GPU(s):",torch.cuda.device_count())
+        
+        self.model = CrossEncoder(model_checkpoint = self.args.cross_checkpoint,
+                                  representation = self.args.cross_representation,
+                                  fixed = self.args.cross_fixed,
+                                  dropout = self.args.cross_dropout)
+        if self.args.cross_load_path:
+            self.model.load_state_dict(torch.load(self.args.cross_load_path))
         if self.parallel:
             self.model = DataParallel(self.model)
         self.model.to(self.device)
         self.criterion = CrossEncoderCELoss()
-        self.optimizer = AdamW(self.model.parameters(), lr=args["cross_lr"]) 
-        self.scheduler = WarmupLinearSchedule(self.optimizer, int(0.1 * len(self.train_loader) * self.args["cross_num_epochs"]), len(self.train_loader) * self.args["cross_num_epochs"])
+        self.optimizer = AdamW(self.model.parameters(), lr=args.cross_lr) 
+        self.scheduler = WarmupLinearSchedule(self.optimizer, int(0.1 * len(self.train_loader) * self.args.cross_num_epochs), len(self.train_loader) * self.args.cross_num_epochs)
         
         self.epoch = 0
         self.patience_counter = 0
         self.best_val_acc = 0.0
         self.steps_count = []
-        #self.train_losses = []
         self.valid_losses = []
-        #self.train_acc = []
         self.valid_acc = []
         self.steps = 0
         
@@ -67,45 +90,21 @@ class CrossTrainer():
               20 * "=",
               "Training biencoder model on device: {}".format(self.device),
               20 * "=")
-        while self.epoch < self.args["cross_num_epochs"]:
+        while self.epoch < self.args.cross_num_epochs:
             self.epoch +=1
             print("* Training epoch {}:".format(self.epoch))
             epoch_avg_loss, epoch_accuracy, epoch_time = self.train()
-            #self.train_losses.append(epoch_avg_loss)
-            #self.train_acc.append(epoch_accuracy.to('cpu')*100)
             print("-> Training time: {:.4f}s, loss = {:.4f}, accuracy: {:.4f}%"
                   .format(epoch_time, epoch_avg_loss, (epoch_accuracy*100)))
             if self.stop:
                 break
         
-            #print("* Validation for epoch {}:".format(self.epoch))
-            #epoch_time, epoch_loss, epoch_accuracy = self.validate()
-            #self.valid_losses.append(epoch_loss)
-            #self.valid_acc.append(epoch_accuracy.to('cpu')*100)
-            #print("-> Valid. time: {:.4f}s, loss: {:.4f}, accuracy: {:.4f}%\n"
-            #      .format(epoch_time, epoch_loss, (epoch_accuracy*100)))
-
-            #if epoch_accuracy <= self.best_val_acc:
-            #    self.patience_counter += 1
-
-            #else:
-            #    self.best_val_acc = epoch_accuracy
-            #    self.patience_counter = 0
-            #    if self.parallel:
-            #        torch.save(self.model.module.state_dict(), self.args["best_path"])
-            #    else:
-            #        torch.save(self.model.state_dict(), self.args["best_path"])
-            
-            #if self.patience_counter >= self.args["patience"]:
-            #    print("-> Early stopping: patience limit reached, stopping...")
-            #    break
         if self.parallel:   
-            torch.save(self.model.module.state_dict(), self.args["final_path"]) 
+            torch.save(self.model.module.state_dict(), self.args.cross_final_path) 
         else:
-            torch.save(self.model.state_dict(), self.args["final_path"])    
+            torch.save(self.model.state_dict(), self.args.cross_final_path)    
         # Plotting of the loss curves for the train and validation sets.
         plt.figure()
-        #plt.plot(self.epochs_count, self.train_losses, "-r")
         plt.plot(self.steps_count, self.valid_losses, "-r")
         plt.xlabel("step")
         plt.ylabel("loss")
@@ -125,7 +124,7 @@ class CrossTrainer():
         print("* Testing with final model:")
         test_loss, test_acc = self.test()
         print("-> Accuracy: {:.4f}%".format((test_acc*100)))
-        best_path = "/kaggle/working/" + self.args['best_path']
+        best_path = "/kaggle/working/" + self.args.cross_best_path
         if self.parallel:
             self.model.module.load_state_dict(torch.load(best_path))
         else:
@@ -159,7 +158,7 @@ class CrossTrainer():
                         epoch_loss/(i+1))
             tqdm_batch_iterator.set_description(description)
             
-            if self.steps % 1000 == 0:
+            if self.steps % self.args.cross_eval_steps == 0:
                 self.steps_count.append(self.steps)
                 print("\t* Validation for step {}:".format(self.steps))
                 epoch_time, epoch_loss, epoch_accuracy = self.validate()
@@ -175,11 +174,11 @@ class CrossTrainer():
                     self.best_val_acc = epoch_accuracy
                     self.patience_counter = 0
                     if self.parallel:
-                        torch.save(self.model.module.state_dict(), self.args["best_path"])
+                        torch.save(self.model.module.state_dict(), self.args.cross_best_path)
                     else:
-                        torch.save(self.model.state_dict(), self.args["best_path"])
+                        torch.save(self.model.state_dict(), self.args.cross_best_path)
             
-                if self.patience_counter >= self.args["patience"]:
+                if self.patience_counter >= self.args.cross_patience:
                     self.stop = True
                     print("-> Early stopping: patience limit reached, stopping...")
                     break
@@ -195,7 +194,7 @@ class CrossTrainer():
         input_ids, attn_mask, labels = tuple(t.to(self.device) for t in batch)
 
         self.optimizer.zero_grad()
-        logits, prob = self.model(input_ids, attn_mask)
+        logits = self.model(input_ids, attn_mask)
         loss, num_correct = self.criterion.calc(logits, labels)
         loss.backward()
         self.optimizer.step()
@@ -212,10 +211,9 @@ class CrossTrainer():
         accuracy = 0
 
         with torch.no_grad():
-            #tqdm_batch_iterator = tqdm(self.val_loader)
             for i, batch in enumerate(self.val_loader):
                 input_ids, attn_mask, labels = tuple(t.to(self.device) for t in batch)
-                logits, prob = self.model(input_ids, attn_mask)
+                logits = self.model(input_ids, attn_mask)
                 loss, num_correct = self.criterion.calc(logits, labels)
                 total_loss += loss.item()
                 total_correct += num_correct
@@ -234,7 +232,7 @@ class CrossTrainer():
             tqdm_batch_iterator = tqdm(self.test_loader)
             for i, batch in enumerate(tqdm_batch_iterator):
                 input_ids, attn_mask, labels = tuple(t.to(self.device) for t in batch)
-                logits, prob = self.model(input_ids, attn_mask)
+                logits = self.model(input_ids, attn_mask)
                 loss, num_correct = self.criterion.calc(logits, labels)
                 total_loss += loss.item()
                 total_correct += num_correct

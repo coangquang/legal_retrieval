@@ -1,12 +1,13 @@
 import time
 from tqdm import tqdm
-import pandas as pd
 import matplotlib.pyplot as plt
+
 import torch
 from torch.utils.checkpoint import get_device_states, set_device_states
 from torch.nn import DataParallel
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
+
 from model import BiEncoder
 from loss import BiEncoderNllLoss, BiEncoderDoubleNllLoss
 

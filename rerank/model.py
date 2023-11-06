@@ -34,15 +34,15 @@ class CrossEncoder(nn.Module):
                 sequence_output = outputs['last_hidden_state']
                 sequence_output = sequence_output.masked_fill(~attention_mask[..., None].bool(), 0.0)
         
-                if type(self.representation) is int:
+                if self.representation > -2:
                     output = sequence_output[:, self.representation, :]
-                elif self.representation == 'avg':
+                elif self.representation == -10:
                     output = sequence_output.sum(dim=1) / attention_mask.sum(dim=1)[..., None]
-                else:
+                elif self.representation == -100:
                     output = outputs[1]
             
                 logits = self.classifier(output)
-                probabilities = nn.functional.softmax(logits, dim=-1)
+                #probabilities = nn.functional.softmax(logits, dim=-1)
         else:
             outputs = self.encoder(input_ids,
                                    attention_mask,
@@ -51,11 +51,11 @@ class CrossEncoder(nn.Module):
             sequence_output = outputs['last_hidden_state']
             sequence_output = sequence_output.masked_fill(~attention_mask[..., None].bool(), 0.0)
         
-            if type(self.representation) is int:
+            if self.representation > -2:
                 output = sequence_output[:, self.representation, :]
-            elif self.representation == 'avg':
+            elif self.representation == -10:
                 output = sequence_output.sum(dim=1) / attention_mask.sum(dim=1)[..., None]
-            else:
+            elif self.representation == -100:
                 output = outputs[1]
             
             logits = self.classifier(output)

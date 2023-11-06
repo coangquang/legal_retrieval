@@ -1,7 +1,6 @@
 import os
 import time
 import json
-import random
 import torch
 import pandas as pd
 import faiss
