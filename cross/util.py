@@ -44,8 +44,6 @@ def build_cross_data(dcorpus, json_file, csv_file, no_negs= 30):
         retrieved_ids = retrieved_list[i]
         ans_ids = str(df['ans_id'][i])
         ans_ids = [int(x) for x in ans_ids.split(", ")]
-        #ans_sub_ids = df['ans_sub_id'][i][1:-1]
-        #ans_sub_ids = [int(x) for x in ans_sub_ids.split(", ")]
         for a_id in ans_ids:
             tokenized_text = dcorpus['tokenized_text'][a_id]
             example = InputExample(texts=[tokenized_question, tokenized_text], label=1)

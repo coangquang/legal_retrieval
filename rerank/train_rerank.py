@@ -3,14 +3,14 @@ import argparse
 import pandas as pd
 import torch
 from transformers import AutoTokenizer
-from util import build_cross_dataloader
+from util import build_cross_dataloader, build_cross_sub_dataloader
 from trainer import CrossTrainer
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scorpus_file", default=None, type=str,
-                        help="Directory of the sub corpus file (scorpus.json)")
+    parser.add_argument("--corpus_dir", default=None, type=str,
+                        help="Directory of the sub corpus file (scorpus.csv, corpus.csv)")
     parser.add_argument("--file_dir", default=None, type=str,
                         help="Directory of the files to prepare data for training cross-encoder")
     parser.add_argument("--json_dir", default=None, type=str,
@@ -39,35 +39,65 @@ def main():
                         help="Path to save the final state")
     parser.add_argument("--cross_load_path", default=None, type=str,
                         help="Path to load state")
+    parser.add_argument("--cross_train_type", default="all", type=str,
+                        help="To train cross encoder on chunks or not")
     
     args = parser.parse_args()
     
-    dscorpus = pd.read_csv(args.scorpus_file)
+    
     tokenizer = AutoTokenizer.from_pretrained(args.cross_checkpoint)
-    train_dataloader = build_cross_dataloader(dscorpus=dscorpus,
-                                              json_file=os.path.join(args.json_dir, "dpr_train_sub_retrieved.json"),
-                                              csv_file=os.path.join(args.file_dir, "ttrain.csv"),
-                                              tokenizer=tokenizer,
-                                              text_len=args.cross_max_len,
-                                              batch_size=args.cross_batch_size,
-                                              no_negs=args.cross_no_negs,
-                                              shuffle=True)
-    val_dataloader = build_cross_dataloader(dscorpus=dscorpus,
-                                            json_file=os.path.join(args.json_dir, "dpr_val_sub_retrieved.json"),
-                                            csv_file=os.path.join(args.file_dir, "tval.csv"),
-                                            tokenizer=tokenizer,
-                                            text_len=args.cross_max_len,
-                                            batch_size=args.cross_batch_size,
-                                            no_negs=args.cross_no_negs,
-                                            shuffle=False)  
-    test_dataloader = build_cross_dataloader(dscorpus=dscorpus,
-                                            json_file=os.path.join(args.json_dir, "dpr_test_sub_retrieved.json"),
-                                            csv_file=os.path.join(args.file_dir, "ttest.csv"),
-                                            tokenizer=tokenizer,
-                                            text_len=args.cross_max_len,
-                                            batch_size=args.cross_batch_size,
-                                            no_negs=args.cross_no_negs,
-                                            shuffle=False)
+    if args.cross_train_type == "sub":
+        dscorpus = pd.read_csv(os.path.join(args.corpus_dir, "scorpus.csv"))
+        train_dataloader = build_cross_sub_dataloader(dscorpus=dscorpus,
+                                                    json_file=os.path.join(args.json_dir, "dpr_train_sub_retrieved.json"),
+                                                    csv_file=os.path.join(args.file_dir, "ttrain.csv"),
+                                                    tokenizer=tokenizer,
+                                                    text_len=args.cross_max_len,
+                                                    batch_size=args.cross_batch_size,
+                                                    no_negs=args.cross_no_negs,
+                                                    shuffle=True)
+        val_dataloader = build_cross_sub_dataloader(dscorpus=dscorpus,
+                                                    json_file=os.path.join(args.json_dir, "dpr_val_sub_retrieved.json"),
+                                                    csv_file=os.path.join(args.file_dir, "tval.csv"),
+                                                    tokenizer=tokenizer,
+                                                    text_len=args.cross_max_len,
+                                                    batch_size=args.cross_batch_size,
+                                                    no_negs=args.cross_no_negs,
+                                                    shuffle=False)  
+        test_dataloader = build_cross_sub_dataloader(dscorpus=dscorpus,
+                                                    json_file=os.path.join(args.json_dir, "dpr_test_sub_retrieved.json"),
+                                                    csv_file=os.path.join(args.file_dir, "ttest.csv"),
+                                                    tokenizer=tokenizer,
+                                                    text_len=args.cross_max_len,
+                                                    batch_size=args.cross_batch_size,
+                                                    no_negs=args.cross_no_negs,
+                                                    shuffle=False)
+    else:
+        dcorpus = pd.read_csv(os.path.join(args.corpus_dir, "corpus.csv"))
+        train_dataloader = build_cross_dataloader(dcorpus=dcorpus,
+                                                json_file=os.path.join(args.json_dir, "dpr_train_retrieved.json"),
+                                                csv_file=os.path.join(args.file_dir, "ttrain.csv"),
+                                                tokenizer=tokenizer,
+                                                text_len=args.cross_max_len,
+                                                batch_size=args.cross_batch_size,
+                                                no_negs=args.cross_no_negs,
+                                                shuffle=True)
+        val_dataloader = build_cross_dataloader(dcorpus=dcorpus,
+                                                json_file=os.path.join(args.json_dir, "dpr_val_retrieved.json"),
+                                                csv_file=os.path.join(args.file_dir, "tval.csv"),
+                                                tokenizer=tokenizer,
+                                                text_len=args.cross_max_len,
+                                                batch_size=args.cross_batch_size,
+                                                no_negs=args.cross_no_negs,
+                                                shuffle=False)  
+        test_dataloader = build_cross_dataloader(dcorpus=dcorpus,
+                                                json_file=os.path.join(args.json_dir, "dpr_test_retrieved.json"),
+                                                csv_file=os.path.join(args.file_dir, "ttest.csv"),
+                                                tokenizer=tokenizer,
+                                                text_len=args.cross_max_len,
+                                                batch_size=args.cross_batch_size,
+                                                no_negs=args.cross_no_negs,
+                                                shuffle=False)
     
     trainer = CrossTrainer(args=args,
                            train_loader=train_dataloader,
