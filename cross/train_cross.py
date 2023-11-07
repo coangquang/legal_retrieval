@@ -4,15 +4,15 @@ import argparse
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
-from util import build_cross_data
+from util import build_cross_sub_data, build_cross_data
 from sentence_transformers import InputExample
 from sentence_transformers.cross_encoder import CrossEncoder
 from sentence_transformers.cross_encoder.evaluation import CEBinaryAccuracyEvaluator, CEBinaryClassificationEvaluator 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scorpus_file", default=None, type=str,
-                        help="Directory of the sub corpus file (scorpus.json)")
+    parser.add_argument("--corpus_dir", default=None, type=str,
+                        help="Directory of the (sub) corpus file (scorpus.csv)")
     parser.add_argument("--file_dir", default=None, type=str,
                         help="Directory of the files to prepare data for training cross-encoder")
     parser.add_argument("--json_dir", default=None, type=str,
@@ -34,22 +34,39 @@ def main():
     parser.add_argument("--cross_eval_steps", default=1000, type=int)
     parser.add_argument("--cross_save_path", default=None, type=str,
                         help="Path to save the best state")
+    parser.add_argument("--cross_train_type", default="all", type=str,
+                        help="To train cross encoder on chunks or not")
     
     args = parser.parse_args()
     
-    dscorpus = pd.read_csv(args.scorpus_file)
-    train_samples = build_cross_data(dscorpus=dscorpus,
-                                     json_file=os.path.join(args.json_dir, "dpr_train_sub_retrieved.json"),
-                                     csv_file=os.path.join(args.file_dir, "ttrain.csv"),
-                                     no_negs=args.cross_no_negs)
-    val_samples = build_cross_data(dscorpus=dscorpus,
-                                   json_file=os.path.join(args.json_dir, "dpr_val_sub_retrieved.json"),
-                                   csv_file=os.path.join(args.file_dir, "tval.csv"),
-                                   no_negs=args.cross_no_negs)
-    test_samples = build_cross_data(dscorpus=dscorpus,
-                                   json_file=os.path.join(args.json_dir, "dpr_test_sub_retrieved.json"),
-                                   csv_file=os.path.join(args.file_dir, "ttest.csv"),
-                                   no_negs=args.cross_no_negs)
+    if args.cross_train_type == "sub":
+        dscorpus = pd.read_csv(os.path.join(args.corpus_dir, "scorpus.csv"))
+        train_samples = build_cross_sub_data(dscorpus=dscorpus,
+                                            json_file=os.path.join(args.json_dir, "dpr_train_sub_retrieved.json"),
+                                            csv_file=os.path.join(args.file_dir, "ttrain.csv"),
+                                            no_negs=args.cross_no_negs)
+        val_samples = build_cross_sub_data(dscorpus=dscorpus,
+                                            json_file=os.path.join(args.json_dir, "dpr_val_sub_retrieved.json"),
+                                            csv_file=os.path.join(args.file_dir, "tval.csv"),
+                                            no_negs=args.cross_no_negs)
+        test_samples = build_cross_sub_data(dscorpus=dscorpus,
+                                            json_file=os.path.join(args.json_dir, "dpr_test_sub_retrieved.json"),
+                                            csv_file=os.path.join(args.file_dir, "ttest.csv"),
+                                            no_negs=args.cross_no_negs)
+    else:
+        dcorpus = pd.read_csv(os.path.join(args.corpus_dir, "corpus.csv"))
+        train_samples = build_cross_data(dcorpus=dcorpus,
+                                        json_file=os.path.join(args.json_dir, "dpr_train_retrieved.json"),
+                                        csv_file=os.path.join(args.file_dir, "ttrain.csv"),
+                                        no_negs=args.cross_no_negs)
+        val_samples = build_cross_data(dcorpus=dcorpus,
+                                        json_file=os.path.join(args.json_dir, "dpr_val_retrieved.json"),
+                                        csv_file=os.path.join(args.file_dir, "tval.csv"),
+                                        no_negs=args.cross_no_negs)
+        test_samples = build_cross_data(dcorpus=dcorpus,
+                                        json_file=os.path.join(args.json_dir, "dpr_test_retrieved.json"),
+                                        csv_file=os.path.join(args.file_dir, "ttest.csv"),
+                                        no_negs=args.cross_no_negs)
     
     train_dataloader = DataLoader(train_samples, shuffle=True, batch_size=args.cross_batch_size)
     
