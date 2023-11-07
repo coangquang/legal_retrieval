@@ -25,9 +25,14 @@ def main():
                         help="Path to save the state with highest validation result.")
     parser.add_argument("--index_path", default=None, type=str,
                         help="Path to save the index")
+    parser.add_argument("--retriever_type", default="all", type=str,
+                        help="To retrieve cross encoder on chunks or not")
     
     args = parser.parse_args()
-    dpr_retriever = DPRRetriever(args, sub=True)
+    if args.retriever_type == "sub":
+        dpr_retriever = DPRRetriever(args, sub=True)
+    else:
+        dpr_retriever = DPRRetriever(args)
     dpr_retriever.test_on_data(top_k = [1,5,10,30,100])
     
     
