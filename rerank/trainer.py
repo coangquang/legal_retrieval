@@ -1,3 +1,4 @@
+import os
 import time
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -123,11 +124,11 @@ class CrossTrainer():
         print("* Testing with final model:")
         test_loss, test_acc = self.test()
         print("-> Accuracy: {:.4f}%".format((test_acc*100)))
-        best_path = "/kaggle/working/" + self.args.cross_best_path
+        #best_path = "/kaggle/working/" + self.args.cross_best_path
         if self.parallel:
-            self.model.module.load_state_dict(torch.load(best_path))
+            self.model.module.load_state_dict(torch.load(self.args.cross_best_path))
         else:
-            self.model.load_state_dict(torch.load(best_path))
+            self.model.load_state_dict(torch.load(self.args.cross_best_path))
         print("* Testing with best model:")
         test_loss, test_acc = self.test()
         print("-> Accuracy: {:.4f}%".format((test_acc*100)))
