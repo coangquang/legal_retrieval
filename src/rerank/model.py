@@ -1,13 +1,14 @@
 import torch
 from torch import nn
-from transformers import AutoModel
+from transformers import AutoModel, AutoTokenizer
 
 class CrossEncoder(nn.Module):
     def __init__(self, 
                  encoder= None,
                  model_checkpoint="vinai/phobert-base-v2",
                  representation=0,
-                 dropout=0.1):
+                 dropout=0.1,
+                 device=torch.device("cuda" if torch.cuda.is_available() else "cpu")):
         super(CrossEncoder, self).__init__()
         if encoder:
             self.encoder=encoder
@@ -16,6 +17,9 @@ class CrossEncoder(nn.Module):
         self.representation = representation
         self.classifier = nn.Sequential(nn.Dropout(p=dropout),
                                         nn.Linear(self.encoder.config.hidden_size,2))
+        self.tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+        self.device = device
+        self.sep_token = " . " + self.tokenizer.sep_token + " "
 
     def forward(
         self,
@@ -38,6 +42,18 @@ class CrossEncoder(nn.Module):
             output = outputs[1]
             
         logits = self.classifier(output)
-        #probabilities = nn.functional.softmax(logits, dim=-1)
             
-        return logits#, probabilities
+        return logits
+    
+    def predict(self, cross_samples, max_len):
+        cross_texts = [q + self.sep_token + p for (q,p) in cross_samples]
+        C = self.tokenizer.batch_encode_plus(cross_texts,
+                                             padding='max_length',
+                                             truncation=True,
+                                             max_length=max_len,
+                                             return_tensors='pt')
+        logits = self.encoder(C['input_ids'].to(self.device),
+                            C['attention_mask'].to(self.device))  
+        probs = nn.functional.softmax(logits, dim=-1)
+        
+        return probs
