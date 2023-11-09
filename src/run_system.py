@@ -1,4 +1,6 @@
 import argparse
+import sys
+sys.path.append('/src/dpr')
 from system import Retriever
 
 
