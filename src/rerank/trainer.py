@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
 
-from .model import CrossEncoder
+from model import CrossEncoder
 
 class CrossEncoderCELoss(object):
     def calc(self,
