@@ -25,7 +25,7 @@ def build_cross_sub_dataloader(dscorpus, json_file, csv_file, tokenizer, text_le
             text = tokenized_question + sep_token + tokenized_text
             
             for j in range(no_negs-1):
-                labels.append(1)
+                labels.append(0)
                 texts.append(text)
                 
         neg_ids = [x for x in retrieved_sub_ids if dscorpus['id'][x] not in ans_ids]
@@ -33,7 +33,7 @@ def build_cross_sub_dataloader(dscorpus, json_file, csv_file, tokenizer, text_le
         for neg_id in neg_ids:
             tokenized_text = dscorpus['tokenized_text'][neg_id]
             text = tokenized_question + sep_token + tokenized_text
-            labels.append(0)
+            labels.append(1)
             texts.append(text)    
             
     C = tokenizer.batch_encode_plus(texts, padding='max_length', truncation=True, max_length=text_len, return_tensors='pt')
