@@ -7,7 +7,7 @@ import faiss
 from datasets import load_dataset
 from .model import BiEncoder
 from .util import get_tokenizer
-from preprocess import tokenise, preprocess_question
+from .preprocess import tokenise, preprocess_question
 from pyvi.ViTokenizer import tokenize
 
 class DPRRetriever():
