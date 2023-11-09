@@ -3,8 +3,8 @@ import argparse
 import pandas as pd
 import torch
 from transformers import AutoTokenizer
-from util import build_cross_dataloader, build_cross_sub_dataloader
-from trainer import CrossTrainer
+from rerank.util import build_cross_dataloader, build_cross_sub_dataloader
+from rerank.trainer import CrossTrainer
 
 
 def main():

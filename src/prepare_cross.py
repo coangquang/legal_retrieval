@@ -1,5 +1,5 @@
 import argparse
-from retriever import DPRRetriever
+from dpr.retriever import DPRRetriever
 
 def main():
     parser = argparse.ArgumentParser()

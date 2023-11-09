@@ -2,9 +2,9 @@ import os
 import argparse
 import pandas as pd
 import torch
-from .util import get_tokenizer, build_dpr_traindata#, embed_corpus
-from .trainer import DPRTrainer
-from .retriever import DPRRetriever
+from dpr.util import get_tokenizer, build_dpr_traindata#, embed_corpus
+from dpr.trainer import DPRTrainer
+from dpr.retriever import DPRRetriever
 
 def main():
     parser = argparse.ArgumentParser()
