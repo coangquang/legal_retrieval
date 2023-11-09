@@ -48,7 +48,7 @@ class Retriever():
         end = time.time()
         print(end - start)
     
-    def retrieve(self, question, top_k=30, segmented = False):
+    def retrieve(self, question, top_k=30, segmented = True):
         start = time.time()
         self.q_encoder.to(self.device).eval()
         
