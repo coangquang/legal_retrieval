@@ -3,11 +3,11 @@ import time
 import json
 import torch
 import pandas as pd
-from dpr.util import get_tokenizer
-from dpr.preprocess import tokenise, preprocess_question
+from .dpr.util import get_tokenizer
+from .dpr.preprocess import tokenise, preprocess_question
 from pyvi.ViTokenizer import tokenize
-from dpr.retriever import DPRRetriever
-from rerank.model import CrossEncoder
+from .dpr.retriever import DPRRetriever
+from .rerank.model import CrossEncoder
 
 class Retriever():
     def __init__(self, 
