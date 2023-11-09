@@ -5,6 +5,8 @@ import torch
 import pandas as pd
 import faiss
 from datasets import load_dataset
+import sys
+sys.path.append('/src/dpr')
 from model import BiEncoder
 from util import get_tokenizer
 from preprocess import tokenise, preprocess_question
