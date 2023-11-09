@@ -61,7 +61,7 @@ class Retriever():
 
         cross_scores = self.cross_encoder.predict(cross_samples, max_len=self.args.cross_len)
         
-        rerank_list = [(retrieved_ids[i], retrieved_sub_ids[i], self.args.cross_ratio*float(cross_scores[i][0].item) + float(self.args.dpr_ratio*dpr_scores[i]) ) for i in range(top_k)]
+        rerank_list = [(retrieved_ids[i], retrieved_sub_ids[i], self.args.cross_ratio*float(cross_scores[i][0].item()) + float(self.args.dpr_ratio*dpr_scores[i]) ) for i in range(top_k)]
         sorted_rerank_list = sorted(rerank_list, key=lambda x: x[2], reverse=True)   
         rerank_ids = [x[0] for x in sorted_rerank_list]
         rerank_sub_ids = [x[1] for x in sorted_rerank_list]
