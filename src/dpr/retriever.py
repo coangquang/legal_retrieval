@@ -10,7 +10,6 @@ from util import get_tokenizer
 from preprocess import tokenise, preprocess_question
 from pyvi.ViTokenizer import tokenize
 
-
 class DPRRetriever():
     def __init__(self, args, q_encoder=None, ctx_encoder=None, biencoder=None, save_type="dpr", sub=False):
         start = time.time()

@@ -6,7 +6,7 @@ import pandas as pd
 from dpr.util import get_tokenizer
 from dpr.preprocess import tokenise, preprocess_question
 from pyvi.ViTokenizer import tokenize
-from dpretriever import DPRRetriever
+from dpr.retriever import DPRRetriever
 from rerank.model import CrossEncoder
 from transformers import AutoTokenizer
 
