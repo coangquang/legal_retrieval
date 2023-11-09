@@ -62,7 +62,7 @@ def build_cross_dataloader(dcorpus, json_file, csv_file, tokenizer, text_len, ba
             text = tokenized_question + sep_token + tokenized_text
             
             for j in range(no_negs-1):
-                labels.append(1)
+                labels.append(0)
                 texts.append(text)
                 
         neg_ids = [x for x in retrieved_ids if x not in ans_ids]
@@ -70,7 +70,7 @@ def build_cross_dataloader(dcorpus, json_file, csv_file, tokenizer, text_len, ba
         for neg_id in neg_ids:
             tokenized_text = dcorpus['tokenized_text'][neg_id]
             text = tokenized_question + sep_token + tokenized_text
-            labels.append(0)
+            labels.append(1)
             texts.append(text)    
             
     C = tokenizer.batch_encode_plus(texts, padding='max_length', truncation=True, max_length=text_len, return_tensors='pt')
