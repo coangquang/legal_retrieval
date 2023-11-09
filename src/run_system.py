@@ -1,7 +1,7 @@
 import argparse
 from system import Retriever
 import sys
-sys.path.append('/dpr')
+sys.path.append('/src/dpr')
 
 def main():
     parser = argparse.ArgumentParser()
