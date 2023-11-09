@@ -52,8 +52,8 @@ class CrossEncoder(nn.Module):
                                              truncation=True,
                                              max_length=max_len,
                                              return_tensors='pt')
-        logits = self.forward(C['input_ids'].to(self.device),
+        with torch.no_grad():
+            logits = self.forward(C['input_ids'].to(self.device),
                             C['attention_mask'].to(self.device))  
-        probs = nn.functional.softmax(logits, dim=-1)
-        
+            probs = nn.functional.softmax(logits, dim=-1)
         return probs

@@ -8,8 +8,8 @@ from torch.nn import DataParallel
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
 
-from model import BiEncoder
-from loss import BiEncoderNllLoss, BiEncoderDoubleNllLoss
+from .model import BiEncoder
+from .loss import BiEncoderNllLoss, BiEncoderDoubleNllLoss
 
 
 class WarmupLinearSchedule(LambdaLR):

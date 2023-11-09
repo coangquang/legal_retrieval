@@ -1,13 +1,10 @@
 import os
 import argparse
-#import faiss
 import pandas as pd
-#import numpy as np
 import torch
-from util import get_tokenizer, build_dpr_traindata#, embed_corpus
-from trainer import DPRTrainer
-#from model import BiEncoder
-from retriever import DPRRetriever
+from .util import get_tokenizer, build_dpr_traindata#, embed_corpus
+from .trainer import DPRTrainer
+from .retriever import DPRRetriever
 
 def main():
     parser = argparse.ArgumentParser()

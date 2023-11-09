@@ -3,7 +3,7 @@ import argparse
 import pandas as pd
 import torch
 from transformers import AutoTokenizer
-from util import build_cross_dataloader, build_cross_sub_dataloader
+from .util import build_cross_dataloader, build_cross_sub_dataloader
 from .trainer import CrossTrainer
 
 
