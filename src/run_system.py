@@ -44,3 +44,6 @@ def main():
     args = parser.parse_args()
     system = Retriever(args)
     system.test_on_data(top_k = [1,5,10,30], test=True, val=True)
+    
+if __name__ == "__main__":
+    main()
