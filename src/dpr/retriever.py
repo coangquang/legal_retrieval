@@ -126,7 +126,28 @@ class DPRRetriever():
         save_file = "outputs/testdpr_"+ self.save_type + ".json" 
         with open(save_file, 'w') as f:
             json.dump(result, f, ensure_ascii = False, indent =4)
-        
+            
+    def retrieve_with_result(self, df, name, top_k=[100], segmented=False):
+        result = []
+        if self.sub:
+            retrieved, sub_retrieved = self.retrieve_on_data(df, name, top_k=max(top_k), segmented=segmented)
+        else:
+            retrieved = self.retrieve_on_data(df, name, top_k=max(top_k), segmented=segmented)
+            
+        for k in top_k:
+            rlt = {}
+            strk = str(k)
+            rlt[strk] = {}
+            retrieved_k = [x[:k] for x in retrieved]
+            
+            print("Testing hit scores with top_{}:".format(k))
+            hit_acc, all_acc = self.calculate_score(df, retrieved_k)
+            rlt[strk]['hit'] = hit_acc
+            rlt[strk]['all'] = all_acc
+            print("\tHit acc: {:.4f}%".format(hit_acc*100))
+            print("\tAll acc: {:.4f}%".format(all_acc*100))
+            result.append(rlt)     
+              
     def retrieve_on_data(self, df, name, top_k = 100, segmented = False):
         count = 0
         acc = 0
