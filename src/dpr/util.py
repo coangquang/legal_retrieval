@@ -10,7 +10,7 @@ def get_tokenizer(model_checkpoint):
     tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
     return tokenizer
 
-def build_dpr_traindata(corpus, df, tokenizer, q_len, ctx_len, batch_size, no_hard, shuffle = False, sub=False):
+def build_dpr_traindata(corpus, df, tokenizer, q_len, ctx_len, batch_size, no_hard, shuffle = False, sub=False, new_data=False):
     """
     This funtion builds train and val data loader for biencoder training
     """
@@ -21,7 +21,13 @@ def build_dpr_traindata(corpus, df, tokenizer, q_len, ctx_len, batch_size, no_ha
     else:
         ans_ids = df["ans_sub_id"].tolist()
         neg_ids = df["neg_sub_ids"].tolist() 
-    positives = [corpus[i] for i in ans_ids]
+    if new_data:
+        positive_ids = []
+        for ans_id in ans_ids:
+            positive_ids.append(int(str(ans_id).split(", ")[0]))  
+        positives = [corpus[i] for i in positive_ids]
+    else:
+        positives = [corpus[i] for i in ans_ids]
     if no_hard != 0:
         negatives = []
         for x in neg_ids:
@@ -42,18 +48,3 @@ def build_dpr_traindata(corpus, df, tokenizer, q_len, ctx_len, batch_size, no_ha
         data_tensor = TensorDataset(Q['input_ids'], Q['attention_mask'], P['input_ids'], P['attention_mask'])
     data_loader = DataLoader(data_tensor, batch_size=batch_size, shuffle=shuffle)
     return data_loader
-
-def embed_corpus(args, corpus, model, tokenizer):
-    """
-    This function embeds all documents in the corpus given tokenizer and pre-trained encoder
-    """
-    model.eval()
-    save_data = []
-    C = tokenizer.batch_encode_plus(corpus, padding='max_length', truncation=True, max_length=args.ctx_len, return_tensors='pt')
-    input_ids = C['input_ids'].to("cuda")
-    attn_mask = C['attention_mask'].to("cuda")
-    with torch.no_grad():
-        for i in range(len(input_ids)):
-            ex = T.tolist(model.get_representation(input_ids[i].view(1,-1), attn_mask[i].view(1,-1))[0])
-            save_data.append(ex)
-    return save_data

@@ -55,13 +55,19 @@ def main():
                         help="Path to save the state with highest validation result.")
     parser.add_argument("--index_path", default=None, type=str,
                         help="Path to save the index")
+    parser.add_argument("--new_data", default=False, type=bool,
+                        help="To use crawl data or not")
     
     args = parser.parse_args()
-    
     dcorpus = pd.read_csv(args.corpus_file)
-    dtrain = pd.read_csv(os.path.join(args.data_dir, 'train.csv'))
-    dval = pd.read_csv(os.path.join(args.data_dir, 'val.csv'))
-    dtest = pd.read_csv(os.path.join(args.data_dir, 'test.csv'))
+    if args.new_data:
+        dtrain = pd.read_csv(os.path.join(args.data_dir, 'ttrain_all.csv'))
+        dval = pd.read_csv(os.path.join(args.data_dir, 'tval_all.csv'))
+        dtest = pd.read_csv(os.path.join(args.data_dir, 'ttest_all.csv'))
+    else:
+        dtrain = pd.read_csv(os.path.join(args.data_dir, 'train.csv'))
+        dval = pd.read_csv(os.path.join(args.data_dir, 'val.csv'))
+        dtest = pd.read_csv(os.path.join(args.data_dir, 'test.csv'))
     corpus_tokenized = dcorpus['tokenized_text'].tolist()
     tokenizer = get_tokenizer(args.BE_checkpoint)
     print("\t* Loading data...")
@@ -73,7 +79,8 @@ def main():
                                      ctx_len=args.ctx_len,
                                      batch_size=args.BE_val_batch_size, 
                                      no_hard=args.no_hard, 
-                                     shuffle=True)
+                                     shuffle=True,
+                                     new_data=args.new_data)
 
     train_loader = build_dpr_traindata(corpus=corpus_tokenized, 
                                        df=dtrain, 
@@ -82,7 +89,8 @@ def main():
                                        ctx_len=args.ctx_len, 
                                        batch_size=args.BE_train_batch_size, 
                                        no_hard=args.no_hard, 
-                                       shuffle=True)
+                                       shuffle=True,
+                                       new_data=args.new_data)
 
     dpr_trainer = DPRTrainer(args=args,
                             train_loader=train_loader,
