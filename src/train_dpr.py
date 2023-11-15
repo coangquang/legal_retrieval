@@ -61,6 +61,7 @@ def main():
     args = parser.parse_args()
     dcorpus = pd.read_csv(args.corpus_file)
     if args.new_data:
+        print("Training with new data.")
         dtrain = pd.read_csv(os.path.join(args.data_dir, 'ttrain_all.csv'))
         dval = pd.read_csv(os.path.join(args.data_dir, 'tval_all.csv'))
         dtest = pd.read_csv(os.path.join(args.data_dir, 'ttest_all.csv'))
