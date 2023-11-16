@@ -13,7 +13,7 @@ from pyvi.ViTokenizer import tokenize
 class DPRRetriever():
     def __init__(self, args, q_encoder=None, ctx_encoder=None, biencoder=None, save_type="dpr", sub=False):
         start = time.time()
-        if self.new_data:
+        if self.args.new_data:
             self.train_file = "ttrain_all.csv"
             self.test_file = "ttest_all.csv"
             self.val_file = "tval_all.csv"
