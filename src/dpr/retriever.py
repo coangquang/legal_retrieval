@@ -13,6 +13,14 @@ from pyvi.ViTokenizer import tokenize
 class DPRRetriever():
     def __init__(self, args, q_encoder=None, ctx_encoder=None, biencoder=None, save_type="dpr", sub=False):
         start = time.time()
+        if self.new_data:
+            self.train_file = "ttrain_all.csv"
+            self.test_file = "ttest_all.csv"
+            self.val_file = "tval_all.csv"
+        else:
+            self.train_file = "ttrain.csv"
+            self.test_file = "ttest.csv"
+            self.val_file = "tval.csv"
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.args = args
         self.save_type = save_type
@@ -87,18 +95,18 @@ class DPRRetriever():
         return retrieved_ids, scores
     
     def test_on_data(self, top_k =[100], segmented = True, train= True):
-        result = []
-        dtest = pd.read_csv(os.path.join(self.args.data_dir, 'ttest.csv'))
-        dval = pd.read_csv(os.path.join(self.args.data_dir, 'tval.csv'))
+        result = []  
+        dtest = pd.read_csv(os.path.join(self.args.data_dir, self.test_file))
+        dval = pd.read_csv(os.path.join(self.args.data_dir, self.val_file))
         if self.sub:
             if train:
-                dtrain = pd.read_csv(os.path.join(self.args.data_dir, 'ttrain.csv'))
+                dtrain = pd.read_csv(os.path.join(self.args.data_dir, self.ttrain_file))
                 train_retrieved, train_sub_retrieved = self.retrieve_on_data(dtrain, name = 'train', top_k= max(top_k),segmented=segmented)
             test_retrieved, test_sub_retrieved = self.retrieve_on_data(dtest, name = 'test', top_k= max(top_k), segmented=segmented)
             val_retrieved, val_sub_retrieved = self.retrieve_on_data(dval, name = 'val', top_k= max(top_k),segmented=segmented)
         else:
             if train:
-                dtrain = pd.read_csv(os.path.join(self.args.data_dir, 'ttrain.csv'))
+                dtrain = pd.read_csv(os.path.join(self.args.data_dir, self.ttrain_file))
                 train_retrieved = self.retrieve_on_data(dtrain, name = 'train', top_k= max(top_k),segmented=segmented)
             test_retrieved = self.retrieve_on_data(dtest, name = 'test', top_k= max(top_k), segmented=segmented)
             val_retrieved = self.retrieve_on_data(dval, name = 'val', top_k= max(top_k),segmented=segmented)
@@ -148,7 +156,7 @@ class DPRRetriever():
             print("\tAll acc: {:.4f}%".format(all_acc*100))
             result.append(rlt)     
               
-    def retrieve_on_data(self, df, name, top_k = 100, segmented = False):
+    def retrieve_on_data(self, df, name, top_k = 100, segmented = False, saved=True):
         count = 0
         acc = 0
         retrieved_list = []
@@ -166,9 +174,10 @@ class DPRRetriever():
                 retrieved_ids, _ = self.retrieve(tokenized_question, top_k, segmented=True)
                 retrieved_list.append(retrieved_ids)
 
-            save_file = "outputs/" + self.save_type + "_" + name + "_retrieved.json" 
-            with open(save_file, 'w') as f:
-                json.dump(retrieved_list, f, ensure_ascii = False, indent =4)
+            if saved:
+                save_file = "outputs/" + self.save_type + "_" + name + "_retrieved.json" 
+                with open(save_file, 'w') as f:
+                    json.dump(retrieved_list, f, ensure_ascii = False, indent =4)
             return retrieved_list
         else:            
             for i in range(len(df)):
@@ -177,16 +186,17 @@ class DPRRetriever():
                 retrieved_list.append(retrieved_ids)
                 retrieved_sub_list.append(retrieved_sub_ids)
 
-            save_file = "outputs/" + self.save_type + "_" + name + "_retrieved.json" 
-            sub_save_file = "outputs/" + self.save_type + "_" + name + "_sub_retrieved.json"
-            with open(save_file, 'w') as f:
-                json.dump(retrieved_list, f, ensure_ascii = False, indent =4)
-            with open(sub_save_file, 'w') as f:
-                json.dump(retrieved_sub_list, f, ensure_ascii = False, indent =4)
+            if saved:
+                save_file = "outputs/" + self.save_type + "_" + name + "_retrieved.json" 
+                sub_save_file = "outputs/" + self.save_type + "_" + name + "_sub_retrieved.json"
+                with open(save_file, 'w') as f:
+                    json.dump(retrieved_list, f, ensure_ascii = False, indent =4)
+                with open(sub_save_file, 'w') as f:
+                    json.dump(retrieved_sub_list, f, ensure_ascii = False, indent =4)
             return retrieved_list, retrieved_sub_list
     
     def find_neg(self, df, name, no_negs=3, segmented=True):
-        retrieved_list = self.retrieve_on_data(df, name, no_negs+5, segmented)
+        retrieved_list = self.retrieve_on_data(df, name, no_negs+5, segmented, saved=False)
         tokenized_ques = []
         ans_id = []
         new_neg = []
@@ -230,9 +240,9 @@ class DPRRetriever():
     def increase_neg(self, no_negs=3, segmented=True):
         if self.sub:
             return None
-        dtrain = pd.read_csv(os.path.join(self.args.data_dir, 'ttrain.csv'))
-        dval = pd.read_csv(os.path.join(self.args.data_dir, 'tval.csv'))
-        dtest = pd.read_csv(os.path.join(self.args.data_dir, 'ttest.csv'))
+        dtrain = pd.read_csv(os.path.join(self.args.data_dir, self.train_file))
+        dval = pd.read_csv(os.path.join(self.args.data_dir, self.val_file))
+        dtest = pd.read_csv(os.path.join(self.args.data_dir, self.test_file))
         
         dnew_train, dttrain = self.find_neg(dtrain, "train", no_negs, segmented)
         dnew_val, dtval = self.find_neg(dval, "val", no_negs, segmented)
@@ -242,9 +252,9 @@ class DPRRetriever():
         dnew_val.to_csv("outputs/data/{}/val.csv".format(self.save_type), index=False)
         dnew_test.to_csv("outputs/data/{}/test.csv".format(self.save_type), index=False) 
         
-        dttrain.to_csv("outputs/data/{}/ttrain.csv".format(self.save_type), index=False)
-        dtval.to_csv("outputs/data/{}/tval.csv".format(self.save_type), index=False)
-        dttest.to_csv("outputs/data/{}/ttest.csv".format(self.save_type), index=False)
+        dttrain.to_csv("outputs/data/{}/{}".format(self.save_type, self.train_file), index=False)
+        dtval.to_csv("outputs/data/{}/{}".format(self.save_type, self.val_file), index=False)
+        dttest.to_csv("outputs/data/{}/{}".format(self.save_type, self.test_file), index=False)
     
     def calculate_score(self, df, retrieved_list):
         top_k = len(retrieved_list[0])
