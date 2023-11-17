@@ -100,13 +100,13 @@ class DPRRetriever():
         dval = pd.read_csv(os.path.join(self.args.data_dir, self.val_file))
         if self.sub:
             if train:
-                dtrain = pd.read_csv(os.path.join(self.args.data_dir, self.ttrain_file))
+                dtrain = pd.read_csv(os.path.join(self.args.data_dir, self.train_file))
                 train_retrieved, train_sub_retrieved = self.retrieve_on_data(dtrain, name = 'train', top_k= max(top_k),segmented=segmented)
             test_retrieved, test_sub_retrieved = self.retrieve_on_data(dtest, name = 'test', top_k= max(top_k), segmented=segmented)
             val_retrieved, val_sub_retrieved = self.retrieve_on_data(dval, name = 'val', top_k= max(top_k),segmented=segmented)
         else:
             if train:
-                dtrain = pd.read_csv(os.path.join(self.args.data_dir, self.ttrain_file))
+                dtrain = pd.read_csv(os.path.join(self.args.data_dir, self.train_file))
                 train_retrieved = self.retrieve_on_data(dtrain, name = 'train', top_k= max(top_k),segmented=segmented)
             test_retrieved = self.retrieve_on_data(dtest, name = 'test', top_k= max(top_k), segmented=segmented)
             val_retrieved = self.retrieve_on_data(dval, name = 'val', top_k= max(top_k),segmented=segmented)
