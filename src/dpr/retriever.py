@@ -13,6 +13,8 @@ from pyvi.ViTokenizer import tokenize
 class DPRRetriever():
     def __init__(self, args, q_encoder=None, ctx_encoder=None, biencoder=None, save_type="dpr", sub=False):
         start = time.time()
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.args = args
         if self.args.new_data:
             self.train_file = "ttrain_all.csv"
             self.test_file = "ttest_all.csv"
@@ -21,8 +23,6 @@ class DPRRetriever():
             self.train_file = "ttrain.csv"
             self.test_file = "ttest.csv"
             self.val_file = "tval.csv"
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.args = args
         self.save_type = save_type
         self.sub = sub
         self.dpr_tokenizer = get_tokenizer(self.args.BE_checkpoint)
