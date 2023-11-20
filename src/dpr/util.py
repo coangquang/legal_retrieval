@@ -10,32 +10,38 @@ def get_tokenizer(model_checkpoint):
     tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
     return tokenizer
 
-def build_dpr_traindata(corpus, df, tokenizer, q_len, ctx_len, batch_size, no_hard, shuffle = False, sub=False, new_data=False):
+def build_dpr_traindata(corpus, df, tokenizer, q_len, ctx_len, batch_size, no_hard, shuffle = False, sub=False, all_data=False):
     """
     This funtion builds train and val data loader for biencoder training
     """
-    questions = df["tokenized_question"].tolist()
+    tokenized_questions = df["tokenized_question"].tolist()
+    questions = []
+    positives = []
+    negatives = []
     if not sub:
         ans_ids = df["ans_id"].tolist()
         neg_ids = df["neg_ids"].tolist()
     else:
         ans_ids = df["ans_sub_id"].tolist()
         neg_ids = df["neg_sub_ids"].tolist() 
-    if new_data:
-        positive_ids = []
-        for ans_id in ans_ids:
-            positive_ids.append(int(str(ans_id).split(", ")[0]))  
-        positives = [corpus[i] for i in positive_ids]
-    else:
-        positives = [corpus[i] for i in ans_ids]
-    if no_hard != 0:
-        negatives = []
-        for x in neg_ids:
-            str_ids = x[1:-1].split(", ")
-            ids = [int(i) for i in str_ids]
-            ids = ids[:no_hard]
-            neg = [corpus[i] for i in ids]
-            negatives += neg
+    for i in range(len(df)):
+        positive_ids = [int(x) for x in str(ans_ids[i]).split(", ")]
+        poss = [corpus[i] for i in positive_ids]
+        if no_hard != 0:
+            negative_ids = neg_ids[i][1:-1].split(", ")[:no_hard]
+            negs = [corpus[i] for i in negative_ids]
+            
+        if all_data:
+            for pos in poss:
+                questions.append(tokenized_questions[i])
+                positives.append(pos)
+                if no_hard != 0:
+                    negatives += negs
+        else:
+            questions.append(tokenized_questions[i])
+            positives.append(poss[0])
+            if no_hard != 0:
+                negatives += negs
         
     Q = tokenizer.batch_encode_plus(questions, padding='max_length', truncation=True, max_length=q_len, return_tensors='pt')
     P = tokenizer.batch_encode_plus(positives, padding='max_length', truncation=True, max_length=ctx_len, return_tensors='pt')

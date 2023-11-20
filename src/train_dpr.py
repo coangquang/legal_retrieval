@@ -57,6 +57,8 @@ def main():
                         help="Path to save the index")
     parser.add_argument("--new_data", default=False, type=bool,
                         help="To use crawl data or not")
+    parser.add_argument("--all_data", default=False, type=bool,
+                        help="To use all positives or not")
     
     args = parser.parse_args()
     dcorpus = pd.read_csv(args.corpus_file)
@@ -64,11 +66,11 @@ def main():
         print("Training with new data.")
         dtrain = pd.read_csv(os.path.join(args.data_dir, 'ttrain_all.csv'))
         dval = pd.read_csv(os.path.join(args.data_dir, 'tval_all.csv'))
-        dtest = pd.read_csv(os.path.join(args.data_dir, 'ttest_all.csv'))
+        #dtest = pd.read_csv(os.path.join(args.data_dir, 'ttest_all.csv'))
     else:
-        dtrain = pd.read_csv(os.path.join(args.data_dir, 'train.csv'))
-        dval = pd.read_csv(os.path.join(args.data_dir, 'val.csv'))
-        dtest = pd.read_csv(os.path.join(args.data_dir, 'test.csv'))
+        dtrain = pd.read_csv(os.path.join(args.data_dir, 'ttrain.csv'))
+        dval = pd.read_csv(os.path.join(args.data_dir, 'tval.csv'))
+        #dtest = pd.read_csv(os.path.join(args.data_dir, 'ttest.csv'))
     corpus_tokenized = dcorpus['tokenized_text'].tolist()
     tokenizer = get_tokenizer(args.BE_checkpoint)
     print("\t* Loading data...")
@@ -81,7 +83,7 @@ def main():
                                      batch_size=args.BE_val_batch_size, 
                                      no_hard=args.no_hard, 
                                      shuffle=True,
-                                     new_data=args.new_data)
+                                     all_data=args.all_data)
 
     train_loader = build_dpr_traindata(corpus=corpus_tokenized, 
                                        df=dtrain, 
@@ -91,7 +93,7 @@ def main():
                                        batch_size=args.BE_train_batch_size, 
                                        no_hard=args.no_hard, 
                                        shuffle=True,
-                                       new_data=args.new_data)
+                                       all_data=args.all_data)
 
     dpr_trainer = DPRTrainer(args=args,
                             train_loader=train_loader,
