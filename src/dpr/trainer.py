@@ -78,7 +78,7 @@ class DPRTrainer():
                                                     alpha=self.args.BE_loss)
             
         self.val_criterion = BiEncoderNllLoss(score_type=self.args.BE_score)
-        self.optimizer = AdamW(self.model.parameters(), lr=args.BE_lr) 
+        self.optimizer = Adam(self.model.parameters(), lr=args.BE_lr) 
         self.scheduler = WarmupLinearSchedule(self.optimizer, 0.1 * len(self.train_loader) * self.args.BE_num_epochs, len(self.train_loader) * self.args.BE_num_epochs)
         self.epoch = 0
         self.patience_counter = 0
